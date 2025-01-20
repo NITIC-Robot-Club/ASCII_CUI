@@ -15,6 +15,8 @@ Layout layout2 = {
 int main() {
     layout1.at(0)->setNext(&layout2);
     layout2.at(0)->setNext(&layout1);
+    layout1.at(1)->setSelectedStyle(Style::Blink);
+    layout1.at(1)->setSelectedColor(Color::Magenta);
     UI ui(&layout1);
     while (true) {
         ui.print();
@@ -34,12 +36,12 @@ int main() {
 
 void func1() {
     std::cout << "func 1" << std::endl;
-    layout2.at(0)->setColor(Color::Red);
-    layout2.at(0)->setStyle(Style::Blink);
+    // layout2.at(0)->setColor(Color::Red);
+    // layout2.at(0)->setStyle(Style::Blink);
 }
 
 void func11() {
     std::cout << "func 1-1" << std::endl;
-    layout1.at(0)->setColor(Color::Green);
-    layout1.at(1)->setText("hello world (2) changed");
+    // layout1.at(0)->setColor(Color::Green);
+    // layout1.at(1)->setText("hello world (2) changed");
 }

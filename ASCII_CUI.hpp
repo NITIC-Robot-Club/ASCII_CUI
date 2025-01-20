@@ -28,27 +28,6 @@ enum class Style {
     Invisible   = 8
 };
 
-class Text {
-public:
-    Text(const std::string& text, Color color = Color::Normal, Color bgcolor = Color::Normal, Style style = Style::Reset)
-        : text_(text), color_(color), bgcolor_(bgcolor), style_(style) {}
-
-    void setText(const std::string& text) { text_ = text; }
-    void setColor(Color color) { color_ = color; }
-    void setBgColor(Color bgcolor) { bgcolor_ = bgcolor; }
-    void setStyle(Style style) { style_ = style; }
-    void print() {
-        std::cout << "\033[" << (int)style_ << ";" << (int)color_+30 << ";" << (int)bgcolor_+40 << "m" << text_ << "\033[0m";
-    }
-
-private:
-    std::string text_;
-    Color color_;
-    Color bgcolor_;
-    Style style_;
-};
-
-
 class Layout;
 
 class Label {
@@ -56,17 +35,27 @@ public:
     Label(const std::string& text) : text_(text) {}
     Label(const std::string& text, void (*func)()) : text_(text), func_(func) {}
     void setText(const std::string& text) { text_ = text; }
-    void setColor(Color color) { text_.setColor(color); }
-    void setBgColor(Color bgcolor) { text_.setBgColor(bgcolor); }
-    void setStyle(Style style) { text_.setStyle(style); }
-    void print() { text_.print(); }
+    void setColor(Color color) { color_ = color; }
+    void setBGColor(Color bgcolor) { bgcolor_ = bgcolor; }
+    void setStyle(Style style) { style_ = style; }
+    void setSelectedColor(Color color) { selected_color_ = color; }
+    void setSelectedBGColor(Color bgcolor) { selected_bgcolor_ = bgcolor; }
+    void setSelectedStyle(Style style) { selected_style_ = style; }
+    void print() { std::cout << "\033[" << (int)style_ << ";" << (int)color_+30 << ";" << (int)bgcolor_+40 << "m" << text_ << "\033[0m"; }
+    void printSelected() { std::cout << "\033[" << (int)selected_style_ << ";" << (int)selected_color_+30 << ";" << (int)selected_bgcolor_+40 << "m" << text_ << "\033[0m"; }   
     void setNext(Layout* next) { next_ = next; }
     Layout* next() { return next_; }
     void setFunc(void (*func)()) { func_ = func; }
     void func() { if(func_!=nullptr){func_();} }
 
 private:
-    Text text_;
+    std::string text_;
+    Color color_ = Color::Normal;
+    Color bgcolor_ = Color::Normal;
+    Style style_ = Style::Reset;
+    Color selected_color_ = Color::Normal;
+    Color selected_bgcolor_ = Color::Normal;
+    Style selected_style_ = Style::Reset;
     Layout* next_ = nullptr;
     void (*func_)() = nullptr;
 };
@@ -89,10 +78,11 @@ public:
         for (int i = 0; i < current_layout_->size(); i++) {
             if (i == selected_index_) {
                 std::cout << ">";
+                current_layout_->at(i)->printSelected();
             } else {
                 std::cout << " ";
+                current_layout_->at(i)->print();
             }
-            current_layout_->at(i)->print();
             std::cout << std::endl;
         }
     }
