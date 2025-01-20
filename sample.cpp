@@ -3,13 +3,6 @@
 bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
 float V_LIMIT_HIGH=4.2;
 
-void toggle_EMG_RQ();
-void toggle_OVA_EMG_EN();
-void toggle_UVA_EMG_EN();
-void toggle_OIA_EMG_EN();
-void set_V_LIMIT_HIGH();
-
-
 using namespace ASCII_CUI;
 Layout main_layout = {
     {"駆動電源基板設定", "-> drive_power"},
@@ -19,14 +12,14 @@ Layout main_layout = {
 Layout drive_power_layout = {
     {"戻る", "-> main"},
     {"EX_EMG_TRG","自動非常停止設定"},
-    {"EMG_RQ","非常停止要求 : 0", toggle_EMG_RQ},
-    {"V_LIMIT_HIGH","セル当たりの最大電圧アラート : 4.2", set_V_LIMIT_HIGH}
+    {"EMG_RQ","非常停止要求", vSet(&EMG_RQ)},
+    {"V_LIMIT_HIGH","セル当たりの最大電圧アラート", vSet(&V_LIMIT_HIGH)}
 };
 Layout EX_EMG_TRG_layout = {
     {"戻る", "-> drive_power"},
-    {"OVA_EMG_EN", "過電圧アラート時 : 0",toggle_OVA_EMG_EN},
-    {"UVA_EMG_EN", "低電圧アラート時 : 0",toggle_UVA_EMG_EN},
-    {"OIA_EMG_EN", "過電流アラート時 : 0",toggle_OIA_EMG_EN}
+    {"OVA_EMG_EN", "過電圧アラート時", vSet(&OVA_EMG_EN)},
+    {"UVA_EMG_EN", "低電圧アラート時", vSet(&UVA_EMG_EN)},
+    {"OIA_EMG_EN", "過電流アラート時", vSet(&OIA_EMG_EN)}
 };
 
 
@@ -50,31 +43,4 @@ int main() {
         }
     }
     return 0;
-}
-
-
-void set_V_LIMIT_HIGH() {
-    ui.popup("セル当たりの最大電圧アラートを入力してください : ", &V_LIMIT_HIGH);
-    drive_power_layout.at(3)->setText("セル当たりの最大電圧アラート : " + std::to_string(V_LIMIT_HIGH));
-}
-
-
-void toggle_EMG_RQ() {
-    EMG_RQ = !EMG_RQ;
-    drive_power_layout.at(2)->setText("非常停止要求 : " + std::to_string(EMG_RQ));
-}
-
-void toggle_OVA_EMG_EN() {
-    OVA_EMG_EN = !OVA_EMG_EN;
-    EX_EMG_TRG_layout.at(1)->setText("過電圧アラート時 : " + std::to_string(OVA_EMG_EN));
-}
-
-void toggle_UVA_EMG_EN() {
-    UVA_EMG_EN = !UVA_EMG_EN;
-    EX_EMG_TRG_layout.at(2)->setText("低電圧アラート時 : " + std::to_string(UVA_EMG_EN));
-}
-
-void toggle_OIA_EMG_EN() {
-    OIA_EMG_EN = !OIA_EMG_EN;
-    EX_EMG_TRG_layout.at(3)->setText("過電流アラート時 : " + std::to_string(OIA_EMG_EN));
 }
