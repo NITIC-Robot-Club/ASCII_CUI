@@ -4,91 +4,123 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdarg.h>
 
 namespace ASCII_CUI {
-    struct Color {
-        struct FG {
-            static constexpr const char* Black = "\033[30m";
-            static constexpr const char* Red = "\033[31m";
-            static constexpr const char* Green = "\033[32m";
-            static constexpr const char* Yellow = "\033[33m";
-            static constexpr const char* Blue = "\033[34m";
-            static constexpr const char* Magenta = "\033[35m";
-            static constexpr const char* Cyan = "\033[36m";
-            static constexpr const char* White = "\033[37m";
-            static constexpr const char* Normal = "\033[39m";
-        };
-        struct BG {
-            static constexpr const char* Black = "\033[40m";
-            static constexpr const char* Red = "\033[41m";
-            static constexpr const char* Green = "\033[42m";
-            static constexpr const char* Yellow = "\033[43m";
-            static constexpr const char* Blue = "\033[44m";
-            static constexpr const char* Magenta = "\033[45m";
-            static constexpr const char* Cyan = "\033[46m";
-            static constexpr const char* White = "\033[47m";
-            static constexpr const char* Normal = "\033[49m";
-        };
-    };
 
-    struct Style {
-        static constexpr const char* Reset = "\033[0m";
-        static constexpr const char* Bold = "\033[1m";
-        static constexpr const char* Underline = "\033[4m";
-        static constexpr const char* Inverse = "\033[7m";
-    };
+enum class Color {
+    Black = 30,
+    Red = 31,
+    Green = 32,
+    Yellow = 33,
+    Blue = 34,
+    Magenta = 35,
+    Cyan = 36,
+    White = 37,
+    Normal = 39
+};
 
-    typedef struct Text_type {
-        const char* bgcolor;
-        const char* color;
-        const char* style;
-        std::string text;
-    } Text;
+enum class Style {
+    Reset = 0,
+    Bold = 1,
+    Underline = 4,
+    Blink = 5,
+    Reverse = 7,
+    Invisible = 8
+};
 
-    class Layout {
-    public:
-        ASCII_CUI::Text text;
-        void (*callback)();
-        Layout *next;
-        Layout();
-        ~Layout();
-    };
+class Text {
+public:
+    Text(const std::string& text, Color color = Color::Normal, Color bgcolor = Color::Normal, Style style = Style::Reset)
+        : text_(text), color_(color), bgcolor_(bgcolor), style_(style) {}
 
-    typedef struct Layouts_type {
-        std::vector<Layout> texts;
-    } Layouts;
+    void setText(const std::string& text) { text_ = text; }
+    void setColor(Color color) { color_ = color; }
+    void setBgColor(Color bgcolor) { bgcolor_ = bgcolor; }
+    void setStyle(Style style) { style_ = style; }
+    void print() {
+        std::cout << "\033[" << (int)style_ << ";" << (int)color_ << ";" << (int)bgcolor_+10 << "m" << text_ << "\033[0m";
+    }
 
-    class Cursor {
-    public:
-        int x;
-        int y;
-        Cursor();
-        ~Cursor();
-        void move(int x, int y);
-        void moveUp(int n);
-        void moveDown(int n);
-        void moveLeft(int n);
-        void moveRight(int n);
-    };
+private:
+    std::string text_;
+    Color color_;
+    Color bgcolor_;
+    Style style_;
+};
 
-    class Screen {
-    public:
-        Screen();
-        ~Screen();
-        void clear();
-        void print(const char* format, ...);
-        void print(const Text& text);
-    };
 
-    class UI {
-    public:
-        // cursor cursor;
-        // screen screen;
-        // layouts layouts;
-        // ui();
-        // ~ui();
-    };
-}
+class Layout;
+
+class Label {
+public:
+    Label(const std::string& text) : text_(text) {}
+    Label(const std::string& text, void (*func)()) : text_(text), func_(func) {}
+    void setText(const std::string& text) { text_ = text; }
+    void print() { text_.print(); }
+    void setNext(Layout* next) { next_ = next; }
+    Layout* next() { return next_; }
+    void setFunc(void (*func)()) { func_ = func; }
+    void func() { if(func_!=nullptr){func_();} }
+
+private:
+    Text text_;
+    Layout* next_ = nullptr;
+    void (*func_)() = nullptr;
+};
+
+class Layout {
+public:
+    Layout(std::initializer_list<Label> labels) : labels_(labels) {}
+    Label* at(int index) { return &labels_[index]; }
+    int size() { return labels_.size(); }
+private:
+    std::vector<Label> labels_;
+};
+
+class UI {
+public:
+    UI(Layout* layout) : current_layout_(layout), selected_index_(0) { std::cout << "\033[2J"; }
+    void print() {
+        // move to 0,0
+        std::cout << "\033[0;0H";
+        for (int i = 0; i < current_layout_->size(); i++) {
+            if (i == selected_index_) {
+                std::cout << ">";
+            } else {
+                std::cout << " ";
+            }
+            current_layout_->at(i)->print();
+            std::cout << std::endl;
+        }
+    }
+
+    void up() {
+        if (selected_index_ > 0) {
+            selected_index_--;
+        }
+    }
+
+    void down() {
+        if (selected_index_ < current_layout_->size() - 1) {
+            selected_index_++;
+        }
+    }
+
+    void enter() {
+        current_layout_->at(selected_index_)->func();
+        auto next = current_layout_->at(selected_index_)->next();
+        if (next != nullptr) {
+            current_layout_ = next;
+            selected_index_ = 0;
+        }
+        std::cout << "\033[2J\033[0;0H";
+    }
+private:
+    Layout* current_layout_;
+    int selected_index_;
+
+};
+
+} // namespace ASCII_CUI
 
 #endif // __ASCII_CUI_HPP__
