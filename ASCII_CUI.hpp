@@ -32,8 +32,9 @@ class Layout;
 
 class Label {
 public:
-    Label(const std::string& text) : text_(text) {}
-    Label(const std::string& text, void (*func)()) : text_(text), func_(func) {}
+    Label(const std::string& title, const std::string& text) : title_(title), text_(text) {}
+    Label(const std::string& title, const std::string& text, void (*func)()) : title_(title), text_(text), func_(func) {}
+    void setTitle(const std::string& title) { title_ = title; }
     void setText(const std::string& text) { text_ = text; }
     void setColor(Color color) { color_ = color; }
     void setBGColor(Color bgcolor) { bgcolor_ = bgcolor; }
@@ -41,21 +42,35 @@ public:
     void setSelectedColor(Color color) { selected_color_ = color; }
     void setSelectedBGColor(Color bgcolor) { selected_bgcolor_ = bgcolor; }
     void setSelectedStyle(Style style) { selected_style_ = style; }
-    void print() { std::cout << "\033[" << (int)style_ << ";" << (int)color_+30 << ";" << (int)bgcolor_+40 << "m" << text_ << "\033[0m"; }
-    void printSelected() { std::cout << "\033[" << (int)selected_style_ << ";" << (int)selected_color_+30 << ";" << (int)selected_bgcolor_+40 << "m" << text_ << "\033[0m"; }   
+    void print() {
+        std::cout   << "\033["
+                    << (int)style_ << ";"
+                    << (int)color_+30 << ";"
+                    << (int)bgcolor_+40 << "m"
+                    << title_ << "\033[0m";
+    }
+    void printSelected(int n) {
+        std::cout   << "\033["
+                    << (int)selected_style_ << ";"
+                    << (int)selected_color_+30 << ";"
+                    << (int)selected_bgcolor_+40 << "m"
+                    << title_ << "\033[0m";
+        std::cout   << "\033[" << n << ";0H" << "\033[J" << text_;
+    }   
     void setNext(Layout* next) { next_ = next; }
     Layout* next() { return next_; }
     void setFunc(void (*func)()) { func_ = func; }
     void func() { if(func_!=nullptr){func_();} }
 
 private:
+    std::string title_;
     std::string text_;
     Color color_ = Color::Normal;
     Color bgcolor_ = Color::Normal;
     Style style_ = Style::Reset;
     Color selected_color_ = Color::Normal;
     Color selected_bgcolor_ = Color::Normal;
-    Style selected_style_ = Style::Reset;
+    Style selected_style_ = Style::Underline;
     Layout* next_ = nullptr;
     void (*func_)() = nullptr;
 };
@@ -77,14 +92,19 @@ public:
         std::cout << "\033[0;0H";
         for (int i = 0; i < current_layout_->size(); i++) {
             if (i == selected_index_) {
-                std::cout << ">";
-                current_layout_->at(i)->printSelected();
+                // move to i,0
+                std::cout << "\033[" << i+1 << ";1H"; 
+                std::cout << " > ";
+                current_layout_->at(i)->printSelected(current_layout_->size()+2);
             } else {
-                std::cout << " ";
+                std::cout << "\033[" << i+1 << ";1H"; 
+                std::cout << "   ";
                 current_layout_->at(i)->print();
             }
             std::cout << std::endl;
         }
+        std::cout << "\033[" << current_layout_->size()+1 << ";0H";
+        std::cout << "-------------------------------------------" << std::endl << std::endl;
     }
 
     void up() {
@@ -108,6 +128,16 @@ public:
         }
         std::cout << "\033[2J\033[0;0H";
     }
+
+    template <typename T>
+    void popup(const std::string& message, T* input) {
+        std::cout << "\033[2J";
+        std::cout << message << std::endl;
+        std::cout << ">>> ";
+        std::cin >> *input;
+        std::cout << "\033[2J";
+    }
+
 private:
     Layout* current_layout_;
     int selected_index_;
