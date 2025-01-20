@@ -8,24 +8,24 @@
 namespace ASCII_CUI {
 
 enum class Color {
-    Black = 30,
-    Red = 31,
-    Green = 32,
-    Yellow = 33,
-    Blue = 34,
-    Magenta = 35,
-    Cyan = 36,
-    White = 37,
-    Normal = 39
+    Black   = 0,
+    Red     = 1,
+    Green   = 2,
+    Yellow  = 3,
+    Blue    = 4,
+    Magenta = 5,
+    Cyan    = 6,
+    White   = 7,
+    Normal  = 9
 };
 
 enum class Style {
-    Reset = 0,
-    Bold = 1,
-    Underline = 4,
-    Blink = 5,
-    Reverse = 7,
-    Invisible = 8
+    Reset       = 0,
+    Bold        = 1,
+    Underline   = 4,
+    Blink       = 5,
+    Reverse     = 7,
+    Invisible   = 8
 };
 
 class Text {
@@ -38,7 +38,7 @@ public:
     void setBgColor(Color bgcolor) { bgcolor_ = bgcolor; }
     void setStyle(Style style) { style_ = style; }
     void print() {
-        std::cout << "\033[" << (int)style_ << ";" << (int)color_ << ";" << (int)bgcolor_+10 << "m" << text_ << "\033[0m";
+        std::cout << "\033[" << (int)style_ << ";" << (int)color_+30 << ";" << (int)bgcolor_+40 << "m" << text_ << "\033[0m";
     }
 
 private:
@@ -56,6 +56,9 @@ public:
     Label(const std::string& text) : text_(text) {}
     Label(const std::string& text, void (*func)()) : text_(text), func_(func) {}
     void setText(const std::string& text) { text_ = text; }
+    void setColor(Color color) { text_.setColor(color); }
+    void setBgColor(Color bgcolor) { text_.setBgColor(bgcolor); }
+    void setStyle(Style style) { text_.setStyle(style); }
     void print() { text_.print(); }
     void setNext(Layout* next) { next_ = next; }
     Layout* next() { return next_; }
