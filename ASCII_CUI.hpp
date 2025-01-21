@@ -40,7 +40,7 @@ template<> struct typeIndex<bool>     { static const int index = 5;  };
 template<> struct typeIndex<double>   { static const int index = 6;  };
 template<> struct typeIndex<void>     { static const int index = -1; };
 
-std::string get_typename(int type) {
+inline std::string get_typename(int type) {
     switch(type) {
         case 0: return "uint8_t";
         case 1: return "uint16_t";
@@ -102,7 +102,7 @@ Variable vSet(T* variable) {
     return v;
 }
 
-Variable vSet(std::nullptr_t) {
+inline Variable vSet(std::nullptr_t) {
     Variable v;
     v.type = typeIndex<void>::index;
     return v;
@@ -113,18 +113,18 @@ class Layout;
 class Label {
 public:
     Label() {}
-    Label(const std::string& title, const std::string& text)
-        : title(title), text(text) {}
-    Label(const std::string& title, const std::string& text, Layout* next)
-        : title(title), text(text), next(next) {}
-    Label(const std::string& title, const std::string& text, void (*callback)(void))
-        : title(title), text(text), callback(callback) {}
-    Label(const std::string& title, const std::string& text, Variable variable)
-        : title(title), text(text), variable(variable) {}
-    Label(const std::string& title, const std::string& text, Variable variable, void (*callback)(void))
-        : title(title), text(text), variable(variable), callback(callback) {}
-    Label(const std::string& title, const std::string& text, void (*callback)(void), Variable variable)
-        : title(title), text(text), variable(variable), callback(callback) {}
+    Label(const std::string& title_, const std::string& text_)
+        : title(title_), text(text_) {}
+    Label(const std::string& title_, const std::string& text_, Layout* next_)
+        : title(title_), text(text_), next(next_) {}
+    Label(const std::string& title_, const std::string& text_, void (*callback_)(void))
+        : title(title_), text(text_), callback(callback_) {}
+    Label(const std::string& title_, const std::string& text_, Variable variable_)
+        : title(title_), text(text_), variable(variable_) {}
+    Label(const std::string& title_, const std::string& text_, Variable variable_, void (*callback_)(void))
+        : title(title_), text(text_), variable(variable_), callback(callback_) {}
+    Label(const std::string& title_, const std::string& text_, void (*callback_)(void), Variable variable_)
+        : title(title_), text(text_), variable(variable_), callback(callback_) {}
 
     std::string title = "";
     std::string text = "";
@@ -240,7 +240,7 @@ public:
             if (i == selected_index_) {
                 std::cout << "\033[" << i+1 << ";1H"; 
                 std::cout << " > ";
-                current_layout_->at(i)->printSelected(current_layout_->size()+2);
+                current_layout_->at(i)->printSelected((int)current_layout_->size()+2);
             } else {
                 std::cout << "\033[" << i+1 << ";1H"; 
                 std::cout << "   ";
