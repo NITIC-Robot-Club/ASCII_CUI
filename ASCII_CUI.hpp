@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <typeindex>
-#include <any>
 
 namespace ASCII_CUI {
 
@@ -34,7 +33,7 @@ class Layout;
 
 typedef struct variable_type {
     std::type_index type;
-    std::any* address;
+    void* address;
 } Variable;
 
 template <typename T>
@@ -42,7 +41,7 @@ Variable vSet(T* variable) {
     return Variable{std::type_index(typeid(T)), variable};
 }
 
-class Label {
+class LabelBase {
 public:
     Label(const std::string& title, const std::string& text, Variable variable = Variable{std::type_index(typeid(void)), nullptr})
         : title_(title), text_(text), variable_(variable) {}
@@ -72,11 +71,8 @@ public:
                   << (int)selected_color_ + 30 << ";" 
                   << (int)selected_bgcolor_ + 40 << "m" 
                   << title_ << "\033[0m";
-        std::cout << "\033[" << n << ";1H";
+        std::cout << "\033[" << n << ";1H\033[J";
         std::cout << text_;
-        // if(variable_.address != nullptr) {
-        //     std::cout << " : " << *vParse(variable_);
-        // }
 
     }
     Layout* next() { return next_; }
@@ -170,46 +166,3 @@ private:
 
 #endif // __ASCII_CUI_HPP__
 
-
-// sample.cpp
-
-// #include "ASCII_CUI.hpp"
-// bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
-// float V_LIMIT_HIGH=4.2;
-// using namespace ASCII_CUI;
-// Layout main_layout = {
-//     {"駆動電源基板設定", "-> drive_power"},
-//     {"制御電源基板設定", "-> control_power"},
-//     {"ロボマス制御基板設定", "-> robomas"}
-// };
-// Layout drive_power_layout = {
-//     {"戻る", "-> main"},
-//     {"EX_EMG_TRG","自動非常停止設定"},
-//     {"EMG_RQ","非常停止要求", &EMG_RQ},
-//     {"V_LIMIT_HIGH","セル当たりの最大電圧アラート", &V_LIMIT_HIGH}
-// };
-// Layout EX_EMG_TRG_layout = {
-//     {"戻る", "-> drive_power"},
-//     {"OVA_EMG_EN", "過電圧アラート時", &OVA_EMG_EN},
-//     {"UVA_EMG_EN", "低電圧アラート時", &UVA_EMG_EN},
-//     {"OIA_EMG_EN", "過電流アラート時", &OIA_EMG_EN}
-// };
-// UI ui(&main_layout);
-// int main() {
-//     main_layout.at(0)->setNext(&drive_power_layout);
-//     drive_power_layout.at(0)->setNext(&main_layout);
-//     drive_power_layout.at(1)->setNext(&EX_EMG_TRG_layout);
-//     EX_EMG_TRG_layout.at(0)->setNext(&drive_power_layout);
-//     while (true) {
-//         ui.print();
-//         char c = getchar();
-//         if (c == 'w') {
-//             ui.up();
-//         } else if (c == 's') {
-//             ui.down();
-//         } else if (c == 'e') {
-//             ui.enter();
-//         }
-//     }
-//     return 0;
-// }
