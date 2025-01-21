@@ -35,6 +35,15 @@ ASCII_CUI::Layout EX_EMG_TRG_layout = {
 // main_layoutを初期状態でUI作成
 ASCII_CUI::UI UI(&main_layout);
 
+// 変更時に呼び出される関数を作成
+void on_emg_change(void) {
+    if (EMG_RQ) {
+        UI << "EMG_RQがONになりました" << std::endl;
+    } else {
+        UI << "EMG_RQがOFFになりました" << std::endl;
+    }
+}
+
 
 int main() {
     // Layoutのリンクを設定
@@ -43,6 +52,10 @@ int main() {
     drive_power_layout[1].next = &EX_EMG_TRG_layout;
     EX_EMG_TRG_layout[0].next = &drive_power_layout;
 
+
+    // コールバック関数を設定
+    drive_power_layout[2].callback = &on_emg_change;
+    
     while (true) {
         UI.print(); // 画面更新
         char c = getchar();
