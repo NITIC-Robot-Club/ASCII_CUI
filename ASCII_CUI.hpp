@@ -111,13 +111,18 @@ class Layout;
 
 class Label {
 public:
+    Label() {}
     Label(const std::string& title, const std::string& text)
         : title(title), text(text) {}
+    Label(const std::string& title, const std::string& text, Layout* next)
+        : title(title), text(text), next(next) {}
     Label(const std::string& title, const std::string& text, void (*callback)(void))
         : title(title), text(text), callback(callback) {}
     Label(const std::string& title, const std::string& text, Variable variable)
         : title(title), text(text), variable(variable) {}
     Label(const std::string& title, const std::string& text, Variable variable, void (*callback)(void))
+        : title(title), text(text), variable(variable), callback(callback) {}
+    Label(const std::string& title, const std::string& text, void (*callback)(void), Variable variable)
         : title(title), text(text), variable(variable), callback(callback) {}
 
     std::string title = "";
@@ -132,7 +137,21 @@ public:
     Variable variable = vSet(nullptr);
     void (*callback)(void) = nullptr;
 
-    
+    void operator= (const Label& l) {
+        title = l.title;
+        text = l.text;
+        next = l.next;
+        color = l.color;
+        bgcolor = l.bgcolor;
+        style = l.style;
+        selected_color = l.selected_color;
+        selected_bgcolor = l.selected_bgcolor;
+        selected_style = l.selected_style;
+        variable = l.variable;
+        callback = l.callback;
+    }
+
+
     void select() {
         if(variable.type == -1) {
             return;
@@ -173,7 +192,16 @@ public:
 
 class Layout {
 public:
+    Layout() {}
     Layout(std::initializer_list<Label> labels) : labels_(labels) {}
+
+    void operator= (const Layout& l) {
+        labels_ = l.labels_;
+    }
+
+    void operator= (std::initializer_list<Label> labels) {
+        labels_ = labels;
+    }
 
     Label& operator[](size_t index) {
         return labels_.at(index);
@@ -224,8 +252,8 @@ public:
                         << "| " <<debug_log_[debug_log_length-i-1] << std::endl;
         }
         std::cout << "\033[" << current_layout_->size()+1 << ";0H";
-        std::cout << "-------------------------------------------\n\n\n\n";
-
+        std::cout << "-------------------------------------------\n";
+        std::cout << "\033[" << std::max((int)current_layout_->size(), debug_log_length) << ";0H";
     }
 
     template <typename T>
