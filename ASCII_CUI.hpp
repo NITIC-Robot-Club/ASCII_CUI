@@ -1,10 +1,56 @@
 #ifndef __ASCII_CUI_HPP__
 #define __ASCII_CUI_HPP__
 
+
+// --- sample.cpp ---
+// #include "ASCII_CUI.hpp"
+// bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
+// float V_LIMIT_HIGH=4.2;
+// using namespace ASCII_CUI;
+// Layout main_layout = {
+//     {"駆動電源基板設定", "-> drive_power"},
+//     {"制御電源基板設定", "-> control_power"},
+//     {"ロボマス制御基板設定", "-> robomas"}
+// };
+// Layout drive_power_layout = {
+//     {"戻る", "-> main"},
+//     {"EX_EMG_TRG","自動非常停止設定"},
+//     {"EMG_RQ","非常停止要求", vSet(&EMG_RQ)},
+//     {"V_LIMIT_HIGH","セル当たりの最大電圧アラート", vSet(&V_LIMIT_HIGH)}
+// };
+// Layout EX_EMG_TRG_layout = {
+//     {"戻る", "-> drive_power"},
+//     {"OVA_EMG_EN", "過電圧アラート時", vSet(&OVA_EMG_EN)},
+//     {"UVA_EMG_EN", "低電圧アラート時", vSet(&UVA_EMG_EN)},
+//     {"OIA_EMG_EN", "過電流アラート時", vSet(&OIA_EMG_EN)}
+// };
+// UI ui(&main_layout);
+// int main() {
+//     main_layout.at(0)->setNext(&drive_power_layout);
+//     drive_power_layout.at(0)->setNext(&main_layout);
+//     drive_power_layout.at(1)->setNext(&EX_EMG_TRG_layout);
+//     EX_EMG_TRG_layout.at(0)->setNext(&drive_power_layout);
+//     while (true) {
+//         ui.print();
+//         char c = getchar();
+//         if (c == 'w') {
+//             ui.up();
+//         } else if (c == 's') {
+//             ui.down();
+//         } else if (c == 'e') {
+//             ui.enter();
+//         }
+//     }
+//     return 0;
+// }
+
+
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <typeindex>
+#include <unordered_map>
 
 namespace ASCII_CUI {
 
@@ -29,21 +75,89 @@ enum class Style {
     Invisible   = 8
 };
 
-class Layout;
+std::unordered_map<std::type_index, int> type_map = {
+    {std::type_index(typeid(uint8_t) ), 0 },
+    {std::type_index(typeid(uint16_t)), 1 },
+    {std::type_index(typeid(int32_t) ), 2 },
+    {std::type_index(typeid(uint64_t)), 3 },
+    {std::type_index(typeid(float)   ), 4 },
+    {std::type_index(typeid(bool)    ), 5 },
+    {std::type_index(typeid(double)  ), 6 },
+    {std::type_index(typeid(void)    ), -1}
+};
 
-typedef struct variable_type {
-    std::type_index type;
-    void* address;
-} Variable;
+class Variable {
+public:
+    int type;
+    void* address[7] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+
+    friend std::ostream& operator<<(std::ostream& os, const Variable& v) {
+        if(v.address[v.type] == nullptr) {
+            return os;
+        }
+        switch(v.type) {
+            case 0: os << *(uint8_t*) v.address[v.type]; break;
+            case 1: os << *(uint16_t*)v.address[v.type]; break;
+            case 2: os << *(int32_t*) v.address[v.type]; break;
+            case 3: os << *(uint64_t*)v.address[v.type]; break;
+            case 4: os << *(float*)   v.address[v.type]; break;
+            case 5: os << *(bool*)    v.address[v.type]; break;
+            case 6: os << *(double*)  v.address[v.type]; break;
+            default: break;
+        }
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, Variable& v) {
+        if(v.type == -1) {
+            return is;
+        }
+        switch(v.type) {
+            case 0: is >> *(uint8_t*) v.address[v.type]; break;
+            case 1: is >> *(uint16_t*)v.address[v.type]; break;
+            case 2: is >> *(int32_t*) v.address[v.type]; break;
+            case 3: is >> *(uint64_t*)v.address[v.type]; break;
+            case 4: is >> *(float*)   v.address[v.type]; break;
+            case 5: is >> *(bool*)    v.address[v.type]; break;
+            case 6: is >> *(double*)  v.address[v.type]; break;
+            default: break;
+        }
+        return is;
+    }
+};
+
+std::string get_typename(int type) {
+    switch(type) {
+        case 0: return "uint8_t";
+        case 1: return "uint16_t";
+        case 2: return "int32_t";
+        case 3: return "uint64_t";
+        case 4: return "float";
+        case 5: return "bool";
+        case 6: return "double";
+        default: return "void";
+    }
+}
 
 template <typename T>
 Variable vSet(T* variable) {
-    return Variable{std::type_index(typeid(T)), variable};
+    Variable v;
+    v.type = type_map[std::type_index(typeid(T))];
+    v.address[v.type] = variable;
+    return v;
 }
 
-class LabelBase {
+Variable vSet(std::nullptr_t) {
+    Variable v;
+    v.type = type_map[std::type_index(typeid(void))];
+    return v;
+}
+
+class Layout;
+
+class Label {
 public:
-    Label(const std::string& title, const std::string& text, Variable variable = Variable{std::type_index(typeid(void)), nullptr})
+    Label(const std::string& title, const std::string& text, Variable variable = vSet(nullptr))
         : title_(title), text_(text), variable_(variable) {}
     void setTitle(const std::string& title) { title_ = title; }
     void setText(const std::string& text) { text_ = text; }
@@ -59,6 +173,20 @@ public:
         variable_ = vSet(variable);
     }
     void select() {
+        if(variable_.type == -1) {
+            return;
+        }
+        if(variable_.type == 5) {
+            *(bool*)variable_.address[variable_.type] = !*(bool*)variable_.address[variable_.type];
+        } else {
+            std::cout << "\033[2J";
+            std::cout << "\033[2;1H\033[J" << text_ << std::endl;
+            std::cout << title_ << "の値を入力してください (" << get_typename(variable_.type) << ")" <<std::endl;
+            std::cout << "現在の値 : " << variable_ << std::endl;
+            std::cout << ">>> ";
+            std::cin >> variable_;
+            std::cout << "\033[2J";
+        }
     }
 
     void print() {
@@ -71,9 +199,10 @@ public:
                   << (int)selected_color_ + 30 << ";" 
                   << (int)selected_bgcolor_ + 40 << "m" 
                   << title_ << "\033[0m";
-        std::cout << "\033[" << n << ";1H\033[J";
-        std::cout << text_;
-
+        std::cout << "\033[" << n << ";1H\033[J" << text_;
+        if (variable_.type != -1) {
+            std::cout << " : " << variable_;
+        }
     }
     Layout* next() { return next_; }
 
