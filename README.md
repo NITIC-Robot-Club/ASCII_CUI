@@ -7,7 +7,7 @@ ASCIIコードのキー入力(矢印、スペース、エンター)でCUI(BIOS�
 
 // 事前に設定したい変数を定義
 bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
-float V_LIMIT_HIGH=4.2;
+float V_LIMIT_HIGH=4.2f;
 
 // ASCII_CUI::Layoutで画面を作成
 ASCII_CUI::Layout main_layout = {
@@ -173,7 +173,7 @@ int main() {
 
 // 事前に設定したい変数を定義
 bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
-float V_LIMIT_HIGH=4.2;
+float V_LIMIT_HIGH=4.2f;
 
 // 画面のレイアウトを定義
 ASCII_CUI::Layout main_layout, drive_power_layout, EX_EMG_TRG_layout;
