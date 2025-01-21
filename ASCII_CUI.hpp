@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <typeindex>
+#include <any>
 
 namespace ASCII_CUI {
 
@@ -33,14 +34,13 @@ class Layout;
 
 typedef struct variable_type {
     std::type_index type;
-    void* value;
+    std::any* address;
 } Variable;
 
 template <typename T>
-Variable vSet(T* value) {
-    return Variable{std::type_index(typeid(T)), value};
+Variable vSet(T* variable) {
+    return Variable{std::type_index(typeid(T)), variable};
 }
-
 
 class Label {
 public:
@@ -60,19 +60,6 @@ public:
         variable_ = vSet(variable);
     }
     void select() {
-        std::cout << "selected" << std::endl;
-        // if (variable_.value == nullptr) {
-        //     return;
-        // }
-        // if (variable_.type == std::type_index(typeid(bool))) {
-        //     bool* value = (bool*)variable_.value;
-        //     *value = !(*value);
-        // } else {
-        //     std::cout << "\033[2J";
-        //     std::cout << "Input: ";
-        //     // parse variable_.type and input value
-
-        // }
     }
 
     void print() {
@@ -87,6 +74,9 @@ public:
                   << title_ << "\033[0m";
         std::cout << "\033[" << n << ";1H";
         std::cout << text_;
+        // if(variable_.address != nullptr) {
+        //     std::cout << " : " << *vParse(variable_);
+        // }
 
     }
     Layout* next() { return next_; }
@@ -95,7 +85,7 @@ private:
     std::string title_;
     std::string text_;
     Variable variable_;
-    Layout* next_;
+    Layout* next_ = nullptr;
     Color color_ = Color::Normal;
     Color bgcolor_ = Color::Normal;
     Style style_ = Style::Reset;
@@ -165,7 +155,6 @@ public:
             current_layout_ = next;
             selected_index_ = 0;
         } else {
-            std::cout << "selected" << std::endl;
             current_layout_->at(selected_index_)->select();
         }
         std::cout << "\033[2J\033[0;0H";
