@@ -111,8 +111,14 @@ class Layout;
 
 class Label {
 public:
-    Label(const std::string& title, const std::string& text, Variable variable = vSet(nullptr))
+    Label(const std::string& title, const std::string& text)
+        : title(title), text(text) {}
+    Label(const std::string& title, const std::string& text, void (*callback)(void))
+        : title(title), text(text), callback(callback) {}
+    Label(const std::string& title, const std::string& text, Variable variable)
         : title(title), text(text), variable(variable) {}
+    Label(const std::string& title, const std::string& text, Variable variable, void (*callback)(void))
+        : title(title), text(text), variable(variable), callback(callback) {}
 
     std::string title = "";
     std::string text = "";
@@ -124,6 +130,7 @@ public:
     Color selected_bgcolor = Color::Normal;
     Style selected_style = Style::Underline;
     Variable variable = vSet(nullptr);
+    void (*callback)(void) = nullptr;
 
     
     void select() {
@@ -140,6 +147,9 @@ public:
             std::cout << ">>> ";
             std::cin >> variable;
             std::cout << "\033[2J";
+        }
+        if(callback != nullptr) {
+            callback();
         }
     }
 
@@ -187,7 +197,13 @@ private:
 
 class UI {
 public:
-    UI(Layout* layout) : current_layout_(layout), selected_index_(0) { std::cout << "\033[2J"; }
+    int debug_log_length = 10;
+    int debug_log_place = 50;
+    
+    UI(Layout* layout) : current_layout_(layout), selected_index_(0) {
+        std::cout << "\033[2J";
+        debug_log_.resize(debug_log_length);
+    }
 
     void print() {
         std::cout << "\033[0;0H";
@@ -203,8 +219,13 @@ public:
             }
             std::cout << std::endl;
         }
+        for (int i=0; i<debug_log_length; i++) {
+            std::cout   << "\033["<<i+1<<";"<<debug_log_place<<"H"
+                        << "| " <<debug_log_[debug_log_length-i-1] << std::endl;
+        }
         std::cout << "\033[" << current_layout_->size()+1 << ";0H";
-        std::cout << "-------------------------------------------" << std::endl << std::endl;
+        std::cout << "-------------------------------------------\n\n\n\n";
+
     }
 
     template <typename T>
@@ -238,10 +259,28 @@ public:
         }
         std::cout << "\033[2J\033[0;0H";
     }
+    UI& operator<<(const std::string& log) {
+        if(debug_log_length != debug_log_.size()) {
+            debug_log_.resize(debug_log_length);
+        }
+        for (int i = debug_log_length-1; i > 0; i--) {
+            debug_log_[i] = debug_log_[i-1];
+        }
+        debug_log_[0] = log;
+        return *this;
+    }
+    
+    UI& operator<<(std::ostream& (*os)(std::ostream&)) {
+        print();
+        return *this;
+    }
+
 
 private:
     Layout* current_layout_;
     int selected_index_;
+    std::vector<std::string> debug_log_;
+
 };
 
 } // namespace ASCII_CUI
