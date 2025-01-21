@@ -30,16 +30,28 @@ enum class Style {
     Invisible   = 8
 };
 
-std::unordered_map<std::type_index, int> type_map = {
-    {std::type_index(typeid(uint8_t) ), 0 },
-    {std::type_index(typeid(uint16_t)), 1 },
-    {std::type_index(typeid(int32_t) ), 2 },
-    {std::type_index(typeid(uint64_t)), 3 },
-    {std::type_index(typeid(float)   ), 4 },
-    {std::type_index(typeid(bool)    ), 5 },
-    {std::type_index(typeid(double)  ), 6 },
-    {std::type_index(typeid(void)    ), -1}
-};
+template<typename T> struct typeIndex;
+template<> struct typeIndex<uint8_t>  { static const int index = 0;  };
+template<> struct typeIndex<uint16_t> { static const int index = 1;  };
+template<> struct typeIndex<int32_t>  { static const int index = 2;  };
+template<> struct typeIndex<uint64_t> { static const int index = 3;  };
+template<> struct typeIndex<float>    { static const int index = 4;  };
+template<> struct typeIndex<bool>     { static const int index = 5;  };
+template<> struct typeIndex<double>   { static const int index = 6;  };
+template<> struct typeIndex<void>     { static const int index = -1; };
+
+std::string get_typename(int type) {
+    switch(type) {
+        case 0: return "uint8_t";
+        case 1: return "uint16_t";
+        case 2: return "int32_t";
+        case 3: return "uint64_t";
+        case 4: return "float";
+        case 5: return "bool";
+        case 6: return "double";
+        default: return "void";
+    }
+}
 
 class Variable {
 public:
@@ -81,30 +93,18 @@ public:
     }
 };
 
-std::string get_typename(int type) {
-    switch(type) {
-        case 0: return "uint8_t";
-        case 1: return "uint16_t";
-        case 2: return "int32_t";
-        case 3: return "uint64_t";
-        case 4: return "float";
-        case 5: return "bool";
-        case 6: return "double";
-        default: return "void";
-    }
-}
 
 template <typename T>
 Variable vSet(T* variable) {
     Variable v;
-    v.type = type_map[std::type_index(typeid(T))];
+    v.type = typeIndex<T>::index;
     v.address[v.type] = variable;
     return v;
 }
 
 Variable vSet(std::nullptr_t) {
     Variable v;
-    v.type = type_map[std::type_index(typeid(void))];
+    v.type = typeIndex<void>::index;
     return v;
 }
 
