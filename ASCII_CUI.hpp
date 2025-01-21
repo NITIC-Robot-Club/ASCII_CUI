@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
 
@@ -225,8 +226,8 @@ private:
 
 class UI {
 public:
-    int debug_log_length = 10;
-    int debug_log_place = 50;
+    size_t debug_log_length = 10;
+    size_t debug_log_place = 50;
     
     UI(Layout* layout) : current_layout_(layout), selected_index_(0) {
         std::cout << "\033[2J";
@@ -235,7 +236,7 @@ public:
 
     void print() {
         std::cout << "\033[0;0H";
-        for (int i = 0; i < current_layout_->size(); i++) {
+        for (size_t i = 0; i < current_layout_->size(); i++) {
             if (i == selected_index_) {
                 std::cout << "\033[" << i+1 << ";1H"; 
                 std::cout << " > ";
@@ -247,13 +248,13 @@ public:
             }
             std::cout << std::endl;
         }
-        for (int i=0; i<debug_log_length; i++) {
+        for (size_t i=0; i<debug_log_length; i++) {
             std::cout   << "\033["<<i+1<<";"<<debug_log_place<<"H"
                         << "| " <<debug_log_[debug_log_length-i-1] << std::endl;
         }
         std::cout << "\033[" << current_layout_->size()+1 << ";0H";
         std::cout << "-------------------------------------------\n";
-        std::cout << "\033[" << std::max((int)current_layout_->size(), debug_log_length) << ";0H";
+        std::cout << "\033[" << std::max(current_layout_->size(), debug_log_length) << ";0H";
     }
 
     template <typename T>
@@ -291,14 +292,14 @@ public:
         if(debug_log_length != debug_log_.size()) {
             debug_log_.resize(debug_log_length);
         }
-        for (int i = debug_log_length-1; i > 0; i--) {
+        for (size_t i = debug_log_length-1; i > 0; i--) {
             debug_log_[i] = debug_log_[i-1];
         }
         debug_log_[0] = log;
         return *this;
     }
     
-    UI& operator<<(std::ostream& (*os)(std::ostream&)) {
+    UI& operator<<(std::ostream& (*)(std::ostream&)) {
         print();
         return *this;
     }
@@ -306,7 +307,7 @@ public:
 
 private:
     Layout* current_layout_;
-    int selected_index_;
+    size_t selected_index_;
     std::vector<std::string> debug_log_;
 
 };
