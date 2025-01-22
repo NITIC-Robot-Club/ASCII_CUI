@@ -289,6 +289,16 @@ public:
         std::cout << "\033[2J\033[0;0H";
     }
     UI& operator<<(const std::string& log) {
+        debug(log);
+        return *this;
+    }
+    
+    UI& operator<<(std::ostream& (*)(std::ostream&)) {
+        print();
+        return *this;
+    }
+
+    void debug(const std::string& log) {
         if(debug_log_length != debug_log_.size()) {
             debug_log_.resize(debug_log_length);
         }
@@ -296,12 +306,6 @@ public:
             debug_log_[i] = debug_log_[i-1];
         }
         debug_log_[0] = log;
-        return *this;
-    }
-    
-    UI& operator<<(std::ostream& (*)(std::ostream&)) {
-        print();
-        return *this;
     }
 
 
