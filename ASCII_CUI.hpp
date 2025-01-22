@@ -10,25 +10,63 @@
 namespace ASCII_CUI {
 
 enum class Color {
-    Black   = 0,
-    Red     = 1,
-    Green   = 2,
-    Yellow  = 3,
-    Blue    = 4,
-    Magenta = 5,
-    Cyan    = 6,
-    White   = 7,
-    Normal  = 9
+    Black   = 0,    // 黒
+    Red     = 1,    // 赤
+    Green   = 2,    // 緑
+    Yellow  = 3,    // 黄
+    Blue    = 4,    // 青
+    Magenta = 5,    // 紫
+    Cyan    = 6,    // 水
+    White   = 7,    // 白
+    Normal  = 9     // デフォルト
 };
 
 enum class Style {
-    Reset       = 0,
-    Bold        = 1,
-    Underline   = 4,
-    Blink       = 5,
-    Reverse     = 7,
-    Invisible   = 8
+    Reset       = 0,    // リセット
+    Bold        = 1,    // 太字
+    Underline   = 4,    // 下線
+    Blink       = 5,    // 点滅
+    Reverse     = 7,    // 反転
+    Invisible   = 8     // 不可視
 };
+
+enum class Key {
+    Up      = 65,   // ↑
+    Down    = 66,   // ↓
+    Right   = 67,   // →
+    Left    = 68,   // ←
+    Enter   = 10,   // Enter
+    Space   = 32,   // Space
+    Esc     = 27    // Esc
+};
+
+
+inline std::string setPosition(int x, int y, bool is_title=false) {
+    if(is_title) {
+        return "\033[" + std::to_string(x) + ";" + std::to_string(y) + "H";
+    }
+    return "\033[" + std::to_string(x+1) + ";" + std::to_string(y) + "H";
+}
+
+inline std::string clearScreen = "\033[2J";
+inline std::string clearLine = "\033[2K";
+
+inline std::string setColor(Color color) {
+    return "\033[" + std::to_string((int)color + 30) + "m";
+}
+
+inline std::string setBGColor(Color color) {
+    return "\033[" + std::to_string((int)color + 40) + "m";
+}
+
+inline std::string setStyle(Style style) {
+    return "\033[" + std::to_string((int)style) + "m";
+}
+
+inline std::string resetStyle = "\033[0m";
+
+
+
 
 template<typename T> struct typeIndex;
 template<> struct typeIndex<uint8_t>  { static const int index = 0;  };
@@ -38,6 +76,8 @@ template<> struct typeIndex<uint64_t> { static const int index = 3;  };
 template<> struct typeIndex<float>    { static const int index = 4;  };
 template<> struct typeIndex<bool>     { static const int index = 5;  };
 template<> struct typeIndex<double>   { static const int index = 6;  };
+// !追加の型記述 1
+// void型の場合は-1を返す
 template<> struct typeIndex<void>     { static const int index = -1; };
 
 inline std::string get_typename(int type) {
@@ -49,13 +89,17 @@ inline std::string get_typename(int type) {
         case 4: return "float";
         case 5: return "bool";
         case 6: return "double";
-        default: return "void";
+        // !追加の型記述 2
+        // -1はvoid型, それ以外はエラー
+        case -1: return "void";
+        default: return "error";
     }
 }
 
 class Variable {
 public:
     int type;
+    // 型を増やすときは長さを変更
     void* address[7] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
     friend std::ostream& operator<<(std::ostream& os, const Variable& v) {
@@ -70,6 +114,8 @@ public:
             case 4: os << *(float*)   v.address[v.type]; break;
             case 5: os << *(bool*)    v.address[v.type]; break;
             case 6: os << *(double*)  v.address[v.type]; break;
+            // !追加の型記述 3
+            // void型の場合は何もしない
             default: break;
         }
         return os;
@@ -87,11 +133,14 @@ public:
             case 4: is >> *(float*)   v.address[v.type]; break;
             case 5: is >> *(bool*)    v.address[v.type]; break;
             case 6: is >> *(double*)  v.address[v.type]; break;
+            // !追加の型記述 4
+            // void型の場合は何もしない
             default: break;
         }
         return is;
     }
 };
+
 
 
 template <typename T>
@@ -152,21 +201,20 @@ public:
         callback = l.callback;
     }
 
-
-    void select() {
+    void select(std::string title_) {
         if(variable.type == -1) {
             return;
         }
         if(variable.type == 5) {
             *(bool*)variable.address[variable.type] = !*(bool*)variable.address[variable.type];
         } else {
-            std::cout << "\033[2J";
-            std::cout << "\033[2;1H\033[J" << text << std::endl;
+            std::cout << setPosition(0,0) << clearScreen << text << std::endl;
+            std::cout << title_ << std::endl;
             std::cout << title << "の値を入力してください (" << get_typename(variable.type) << ")" <<std::endl;
             std::cout << "現在の値 : " << variable << std::endl;
             std::cout << ">>> ";
             std::cin >> variable;
-            std::cout << "\033[2J";
+            std::cout << clearScreen;
         }
         if(callback != nullptr) {
             callback();
@@ -174,16 +222,12 @@ public:
     }
 
     void print() {
-        std::cout << "\033[" << (int)style << ";" << (int)color + 30 << ";" 
-                  << (int)bgcolor + 40 << "m" << title << "\033[0m";
+        std::cout << setColor(color) << setBGColor(bgcolor) << setStyle(style) << title << resetStyle;
     }
 
     void printSelected(int n) {
-        std::cout << "\033[" << (int)selected_style << ";" 
-                  << (int)selected_color + 30 << ";" 
-                  << (int)selected_bgcolor + 40 << "m" 
-                  << title << "\033[0m";
-        std::cout << "\033[" << n << ";1H\033[J" << text;
+        std::cout << setColor(selected_color) << setBGColor(selected_bgcolor) << setStyle(selected_style) << title << resetStyle;
+        std::cout << setPosition(n, 0) << text;
         if (variable.type != -1) {
             std::cout << " : " << variable;
         }
@@ -194,10 +238,14 @@ public:
 class Layout {
 public:
     Layout() {}
-    Layout(std::initializer_list<Label> labels) : labels_(labels) {}
+    Layout(std::initializer_list<Label> labels) : labels_(labels), title("") {}
+    Layout(std::initializer_list<Label> labels, std::string title_) : labels_(labels), title(title_) {}
+
+    std::string title;
 
     void operator= (const Layout& l) {
         labels_ = l.labels_;
+        title = l.title;
     }
 
     void operator= (std::initializer_list<Label> labels) {
@@ -230,40 +278,40 @@ public:
     size_t debug_log_place = 50;
     
     UI(Layout* layout) : current_layout_(layout), selected_index_(0) {
-        std::cout << "\033[2J";
+        std::cout << clearScreen;
         debug_log_.resize(debug_log_length);
     }
 
     void print() {
-        std::cout << "\033[0;0H";
+        std::cout << setPosition(0,0) << clearScreen;
+        if(current_layout_->title != "") {
+            std::cout << current_layout_->title << std::endl;
+        }
         for (size_t i = 0; i < current_layout_->size(); i++) {
             if (i == selected_index_) {
-                std::cout << "\033[" << i+1 << ";1H"; 
-                std::cout << " > ";
-                current_layout_->at(i)->printSelected((int)current_layout_->size()+2);
-            } else {
-                std::cout << "\033[" << i+1 << ";1H"; 
-                std::cout << "   ";
+                std::cout << setPosition(i+1,0) << " > ";
+                current_layout_->at(i)->printSelected((int)current_layout_->size()+3);
+            } else {; 
+                std::cout << setPosition(i+1,0) << "   ";
                 current_layout_->at(i)->print();
             }
             std::cout << std::endl;
         }
         for (size_t i=0; i<debug_log_length; i++) {
-            std::cout   << "\033["<<i+1<<";"<<debug_log_place<<"H"
+            std::cout   << setPosition(i,debug_log_place-1)
                         << "| " <<debug_log_[debug_log_length-i-1] << std::endl;
         }
-        std::cout << "\033[" << current_layout_->size()+1 << ";0H";
+        std::cout << setPosition(current_layout_->size()+2, 0);
         std::cout << "-------------------------------------------\n";
-        std::cout << "\033[" << std::max(current_layout_->size(), debug_log_length) << ";0H";
+        std::cout << setPosition(std::max(current_layout_->size(),debug_log_length),0);
     }
 
     template <typename T>
     void popup(const std::string& message, T* input) {
-        std::cout << "\033[2J";
-        std::cout << message << std::endl;
+        std::cout << clearScreen << message << std::endl;
         std::cout << ">>> ";
         std::cin >> *input;
-        std::cout << "\033[2J";
+        std::cout << clearScreen;
     }
 
     void up() {
@@ -284,10 +332,11 @@ public:
             current_layout_ = next;
             selected_index_ = 0;
         } else {
-            current_layout_->at(selected_index_)->select();
+            current_layout_->at(selected_index_)->select(current_layout_->title);
         }
-        std::cout << "\033[2J\033[0;0H";
+        print();
     }
+
     UI& operator<<(const std::string& log) {
         debug(log);
         return *this;
@@ -313,7 +362,6 @@ private:
     Layout* current_layout_;
     size_t selected_index_;
     std::vector<std::string> debug_log_;
-
 };
 
 } // namespace ASCII_CUI
