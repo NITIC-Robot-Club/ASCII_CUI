@@ -41,15 +41,12 @@ enum class Key {
 };
 
 
-inline std::string setPosition(int x, int y, bool is_title=false) {
+inline std::string setPosition(size_t x, size_t y, bool is_title=false) {
     if(is_title) {
         return "\033[" + std::to_string(x) + ";" + std::to_string(y) + "H";
     }
     return "\033[" + std::to_string(x+1) + ";" + std::to_string(y) + "H";
 }
-
-inline std::string clearScreen = "\033[2J";
-inline std::string clearLine = "\033[2K";
 
 inline std::string setColor(Color color) {
     return "\033[" + std::to_string((int)color + 30) + "m";
@@ -63,9 +60,9 @@ inline std::string setStyle(Style style) {
     return "\033[" + std::to_string((int)style) + "m";
 }
 
-inline std::string resetStyle = "\033[0m";
-
-
+const std::string clearScreen = "\033[2J";
+const std::string clearLine = "\033[2K";
+const std::string resetStyle = "\033[0m";
 
 
 template<typename T> struct typeIndex;
@@ -225,9 +222,9 @@ public:
         std::cout << setColor(color) << setBGColor(bgcolor) << setStyle(style) << title << resetStyle;
     }
 
-    void printSelected(int n) {
+    void printSelected(size_t n) {
         std::cout << setColor(selected_color) << setBGColor(selected_bgcolor) << setStyle(selected_style) << title << resetStyle;
-        std::cout << setPosition(n, 0) << text;
+        std::cout << setPosition(n,0) << text;
         if (variable.type != -1) {
             std::cout << " : " << variable;
         }
@@ -238,8 +235,8 @@ public:
 class Layout {
 public:
     Layout() {}
-    Layout(std::initializer_list<Label> labels) : labels_(labels), title("") {}
-    Layout(std::initializer_list<Label> labels, std::string title_) : labels_(labels), title(title_) {}
+    Layout(std::initializer_list<Label> labels) : title(""), labels_(labels) {}
+    Layout(std::initializer_list<Label> labels, std::string title_) : title(title_), labels_(labels) {}
 
     std::string title;
 
@@ -290,7 +287,7 @@ public:
         for (size_t i = 0; i < current_layout_->size(); i++) {
             if (i == selected_index_) {
                 std::cout << setPosition(i+1,0) << " > ";
-                current_layout_->at(i)->printSelected((int)current_layout_->size()+3);
+                current_layout_->at(i)->printSelected(current_layout_->size()+3);
             } else {; 
                 std::cout << setPosition(i+1,0) << "   ";
                 current_layout_->at(i)->print();
