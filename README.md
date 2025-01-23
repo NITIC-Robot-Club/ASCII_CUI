@@ -6,46 +6,48 @@ ASCIIコードのキー入力(矢印、スペース、エンター)でCUI(BIOS�
 #include "ASCII_CUI.hpp"
 
 // 事前に設定したい変数を定義
-bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
-float V_LIMIT_HIGH=4.2f;
+bool myBool = false;
+float myFloat = 1.0f;
+uint8_t  myUint8t  = 1;
+uint16_t myUint16t = 2;
+
 
 // 画面のレイアウトを定義
-ASCII_CUI::Layout main_layout, drive_power_layout, EX_EMG_TRG_layout;
+ASCII_CUI::Layout main_layout, sub_layout, subsub_layout;
 
 // main_layoutを初期状態でUI作成
 ASCII_CUI::UI UI(&main_layout);
 
 // 変更時に呼び出される関数を作成
-void on_emg_change(void) {
-    if (EMG_RQ) {
-        UI << "EMG_RQがONになりました" << std::endl;
+void on_bool_change(void) {
+    if (myBool) {
+        UI << "myBool is true" << std::endl;
     } else {
-        UI << "EMG_RQがOFFになりました" << std::endl;
+        UI << "myBool is false" << std::endl;
     }
 }
 
 void setup() {
-    main_layout = {
-        {"駆動電源基板設定", "-> drive_power", &drive_power_layout},
-        {"制御電源基板設定", "-> control_power"},
-        {"ロボマス制御基板設定", "-> robomas"}
-    };
+    main_layout = ASCII_CUI::Layout({
+        {"myBool", "BOOLのテスト", ASCII_CUI::Variable(&myBool), &on_bool_change},
+        {"sub設定", "-> sub", &sub_layout}},
+        "これはメイン画面表示中のタイトル"
+    );
 
-    drive_power_layout = ASCII_CUI::Layout({
+    sub_layout = ASCII_CUI::Layout({
         {"戻る", "-> main", &main_layout},    // mainに戻る用を追加
-        {"EX_EMG_TRG","自動非常停止設定", &EX_EMG_TRG_layout},
-        {"EMG_RQ","非常停止要求", ASCII_CUI::Variable(&EMG_RQ), &on_emg_change},    // 関数の登録
-        {"V_LIMIT_HIGH","セル当たりの最大電圧アラート", ASCII_CUI::Variable(&V_LIMIT_HIGH)}},
-        "main -> drive_power"
+        {"myFloat", "FLOATのテスト", ASCII_CUI::Variable(&myFloat)},
+        {"subsub設定", "-> subsub", &subsub_layout}},
+        "main -> sub"
     );
 
-    EX_EMG_TRG_layout = ASCII_CUI::Layout({
-        {"戻る", "-> drive_power", &drive_power_layout}, // 戻る用
-        {"OVA_EMG_EN", "過電圧アラート時", ASCII_CUI::Variable(&OVA_EMG_EN)},
-        {"UVA_EMG_EN", "低電圧アラート時", ASCII_CUI::Variable(&UVA_EMG_EN)},
-        {"OIA_EMG_EN", "過電流アラート時", ASCII_CUI::Variable(&OIA_EMG_EN)}},
-        "main -> drive_power -> EX_EMG_TRG"
+    subsub_layout = ASCII_CUI::Layout({
+        {"戻る", "-> sub", &sub_layout},    // subに戻る用を追加
+        {"myUint8t", "UINT8_Tのテスト", ASCII_CUI::Variable(&myUint8t)},
+        {"myUint16t", "UINT16_Tのテスト", ASCII_CUI::Variable(&myUint16t)}},
+        "main -> sub -> subsub"
     );
+
 }
 
 int main() {
@@ -62,8 +64,7 @@ int main() {
         }
     }
     return 0;
-}
-```
+}```
 
 # 仕様
 
@@ -157,3 +158,68 @@ int main() {
 - 同時に仕様することは想定していません
 - `UI << "Hello World!" << std::endl;`でデバッグログを出力できます
 - 使用するインターフェイス(マイコンのUARTやROS2 keyboard topicなど)に応じてup,down,enterを実行してください
+
+
+# サンプル2
+```cpp
+#include "ASCII_CUI.hpp"
+
+// 事前に設定したい変数を定義
+bool EMG_RQ=0, OVA_EMG_EN=0, UVA_EMG_EN=0, OIA_EMG_EN=0;
+float V_LIMIT_HIGH=4.2f;
+
+// 画面のレイアウトを定義
+ASCII_CUI::Layout main_layout, drive_power_layout, EX_EMG_TRG_layout;
+
+// main_layoutを初期状態でUI作成
+ASCII_CUI::UI UI(&main_layout);
+
+// 変更時に呼び出される関数を作成
+void on_emg_change(void) {
+    if (EMG_RQ) {
+        UI << "EMG_RQがONになりました" << std::endl;
+    } else {
+        UI << "EMG_RQがOFFになりました" << std::endl;
+    }
+}
+
+void setup() {
+    main_layout = {
+        {"駆動電源基板設定", "-> drive_power", &drive_power_layout},
+        {"制御電源基板設定", "-> control_power"},
+        {"ロボマス制御基板設定", "-> robomas"}
+    };
+
+    drive_power_layout = ASCII_CUI::Layout({
+        {"戻る", "-> main", &main_layout},    // mainに戻る用を追加
+        {"EX_EMG_TRG","自動非常停止設定", &EX_EMG_TRG_layout},
+        {"EMG_RQ","非常停止要求", ASCII_CUI::Variable(&EMG_RQ), &on_emg_change},    // 関数の登録
+        {"V_LIMIT_HIGH","セル当たりの最大電圧アラート", ASCII_CUI::Variable(&V_LIMIT_HIGH)}},
+        "main -> drive_power"
+    );
+
+    EX_EMG_TRG_layout = ASCII_CUI::Layout({
+        {"戻る", "-> drive_power", &drive_power_layout}, // 戻る用
+        {"OVA_EMG_EN", "過電圧アラート時", ASCII_CUI::Variable(&OVA_EMG_EN)},
+        {"UVA_EMG_EN", "低電圧アラート時", ASCII_CUI::Variable(&UVA_EMG_EN)},
+        {"OIA_EMG_EN", "過電流アラート時", ASCII_CUI::Variable(&OIA_EMG_EN)}},
+        "main -> drive_power -> EX_EMG_TRG"
+    );
+}
+
+int main() {
+    setup();
+    while (true) {
+        UI.print(); // 画面更新
+        int c = getchar();
+        if (c == 'w') {
+            UI.up();    // 上
+        } else if (c == 's') {
+            UI.down();  // 下
+        } else if (c == 'e') {
+            UI.enter(); // 確定
+        }
+    }
+    return 0;
+}
+```

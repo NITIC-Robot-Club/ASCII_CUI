@@ -53,6 +53,10 @@ enum class Type {
     VOID     = -1
 };
 
+const std::string clearScreen = "\033[2J";
+const std::string clearLine = "\033[2K";
+const std::string resetStyle = "\033[0m";
+
 inline std::string setPosition(size_t x, size_t y, bool clear=false) {
     return "\033[" + std::to_string(x+1) + ";" + std::to_string(y+1) + "H" + (clear ? clearLine : "");
 }
@@ -68,11 +72,6 @@ inline std::string setBGColor(Color color) {
 inline std::string setStyle(Style style) {
     return "\033[" + std::to_string((int)style) + "m";
 }
-
-const std::string clearScreen = "\033[2J";
-const std::string clearLine = "\033[2K";
-const std::string resetStyle = "\033[0m";
-
 
 inline std::string get_typename(Type type) {
     switch(type) {
