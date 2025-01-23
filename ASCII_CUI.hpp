@@ -40,6 +40,18 @@ enum class Key {
     Esc     = 27    // Esc
 };
 
+enum class Type {
+    UINT8_T  = 0,
+    UINT16_T = 1,
+    INT32_T  = 2,
+    UINT64_T = 3,
+    FLOAT    = 4,
+    BOOL     = 5,
+    DOUBLE   = 6,
+    // !追加の型記述 1
+
+    VOID     = -1
+};
 
 inline std::string setPosition(size_t x, size_t y, bool is_title=false) {
     if(is_title) {
@@ -65,94 +77,77 @@ const std::string clearLine = "\033[2K";
 const std::string resetStyle = "\033[0m";
 
 
-template<typename T> struct typeIndex;
-template<> struct typeIndex<uint8_t>  { static const int index = 0;  };
-template<> struct typeIndex<uint16_t> { static const int index = 1;  };
-template<> struct typeIndex<int32_t>  { static const int index = 2;  };
-template<> struct typeIndex<uint64_t> { static const int index = 3;  };
-template<> struct typeIndex<float>    { static const int index = 4;  };
-template<> struct typeIndex<bool>     { static const int index = 5;  };
-template<> struct typeIndex<double>   { static const int index = 6;  };
-// !追加の型記述 1
-// void型の場合は-1を返す
-template<> struct typeIndex<void>     { static const int index = -1; };
-
-inline std::string get_typename(int type) {
+inline std::string get_typename(Type type) {
     switch(type) {
-        case 0: return "uint8_t";
-        case 1: return "uint16_t";
-        case 2: return "int32_t";
-        case 3: return "uint64_t";
-        case 4: return "float";
-        case 5: return "bool";
-        case 6: return "double";
+        case Type::UINT8_T  : return "uint8_t";
+        case Type::UINT16_T : return "uint16_t";
+        case Type::INT32_T  : return "int32_t";
+        case Type::UINT64_T : return "uint64_t";
+        case Type::FLOAT    : return "float";
+        case Type::BOOL     : return "bool";
+        case Type::DOUBLE   : return "double";
         // !追加の型記述 2
-        // -1はvoid型, それ以外はエラー
-        case -1: return "void";
+
+        case Type::VOID     : return "void";
         default: return "error";
     }
 }
 
 class Variable {
 public:
-    int type;
+    Variable() : type(Type::VOID), address(nullptr) {}
+    Variable(uint8_t*  variable) : type(Type::UINT8_T),  address(variable) {}
+    Variable(uint16_t* variable) : type(Type::UINT16_T), address(variable) {}
+    Variable(int32_t*  variable) : type(Type::INT32_T),  address(variable) {}
+    Variable(uint64_t* variable) : type(Type::UINT64_T), address(variable) {}
+    Variable(float*    variable) : type(Type::FLOAT),    address(variable) {}
+    Variable(bool*     variable) : type(Type::BOOL),     address(variable) {}
+    Variable(double*   variable) : type(Type::DOUBLE),   address(variable) {}
+    // !追加の型記述 3
+
+
+    Type type;
     // 型を増やすときは長さを変更
-    void* address[7] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+    void* address = nullptr;
 
     friend std::ostream& operator<<(std::ostream& os, const Variable& v) {
-        if(v.address[v.type] == nullptr) {
+        if(v.address == nullptr || v.type == Type::VOID) {
             return os;
         }
         switch(v.type) {
-            case 0: os << *(uint8_t*) v.address[v.type]; break;
-            case 1: os << *(uint16_t*)v.address[v.type]; break;
-            case 2: os << *(int32_t*) v.address[v.type]; break;
-            case 3: os << *(uint64_t*)v.address[v.type]; break;
-            case 4: os << *(float*)   v.address[v.type]; break;
-            case 5: os << *(bool*)    v.address[v.type]; break;
-            case 6: os << *(double*)  v.address[v.type]; break;
-            // !追加の型記述 3
-            // void型の場合は何もしない
+            case Type::UINT8_T  : os << *(uint8_t*) v.address; break;
+            case Type::UINT16_T : os << *(uint16_t*)v.address; break;
+            case Type::INT32_T  : os << *(int32_t*) v.address; break;
+            case Type::UINT64_T : os << *(uint64_t*)v.address; break;
+            case Type::FLOAT    : os << *(float*)   v.address; break;
+            case Type::BOOL     : os << *(bool*)    v.address; break;
+            case Type::DOUBLE   : os << *(double*)  v.address; break;
+            // !追加の型記述 4
+
             default: break;
         }
         return os;
     }
 
     friend std::istream& operator>>(std::istream& is, Variable& v) {
-        if(v.type == -1) {
+        if(v.type == Type::VOID) {
             return is;
         }
         switch(v.type) {
-            case 0: is >> *(uint8_t*) v.address[v.type]; break;
-            case 1: is >> *(uint16_t*)v.address[v.type]; break;
-            case 2: is >> *(int32_t*) v.address[v.type]; break;
-            case 3: is >> *(uint64_t*)v.address[v.type]; break;
-            case 4: is >> *(float*)   v.address[v.type]; break;
-            case 5: is >> *(bool*)    v.address[v.type]; break;
-            case 6: is >> *(double*)  v.address[v.type]; break;
-            // !追加の型記述 4
-            // void型の場合は何もしない
+            case Type::UINT8_T  : is >> *(uint8_t*) v.address; break;
+            case Type::UINT16_T : is >> *(uint16_t*)v.address; break;
+            case Type::INT32_T  : is >> *(int32_t*) v.address; break;
+            case Type::UINT64_T : is >> *(uint64_t*)v.address; break;
+            case Type::FLOAT    : is >> *(float*)   v.address; break;
+            case Type::BOOL     : is >> *(bool*)    v.address; break;
+            case Type::DOUBLE   : is >> *(double*)  v.address; break;
+            // !追加の型記述 5
+            
             default: break;
         }
         return is;
     }
 };
-
-
-
-template <typename T>
-Variable vSet(T* variable) {
-    Variable v;
-    v.type = typeIndex<T>::index;
-    v.address[v.type] = variable;
-    return v;
-}
-
-inline Variable vSet(std::nullptr_t) {
-    Variable v;
-    v.type = typeIndex<void>::index;
-    return v;
-}
 
 class Layout;
 
@@ -181,7 +176,7 @@ public:
     Color selected_color = Color::Normal;
     Color selected_bgcolor = Color::Normal;
     Style selected_style = Style::Underline;
-    Variable variable = vSet(nullptr);
+    Variable variable;
     void (*callback)(void) = nullptr;
 
     void operator= (const Label& l) {
@@ -199,11 +194,11 @@ public:
     }
 
     void select(std::string title_) {
-        if(variable.type == -1) {
+        if(variable.type == Type::VOID) {
             return;
         }
-        if(variable.type == 5) {
-            *(bool*)variable.address[variable.type] = !*(bool*)variable.address[variable.type];
+        if(variable.type == Type::BOOL) {
+            *(bool*)variable.address = !*(bool*)variable.address;
         } else {
             std::cout << setPosition(0,0) << clearScreen << text << std::endl;
             std::cout << title_ << std::endl;
@@ -225,7 +220,7 @@ public:
     void printSelected(size_t n) {
         std::cout << setColor(selected_color) << setBGColor(selected_bgcolor) << setStyle(selected_style) << title << resetStyle;
         std::cout << setPosition(n,0) << text;
-        if (variable.type != -1) {
+        if (variable.type != Type::VOID && variable.address != nullptr) {
             std::cout << " : " << variable;
         }
     }
