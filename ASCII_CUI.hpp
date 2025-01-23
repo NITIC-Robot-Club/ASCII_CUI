@@ -107,7 +107,6 @@ public:
 
 
     Type type;
-    // 型を増やすときは長さを変更
     void* address = nullptr;
 
     friend std::ostream& operator<<(std::ostream& os, const Variable& v) {
