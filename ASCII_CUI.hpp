@@ -53,11 +53,8 @@ enum class Type {
     VOID     = -1
 };
 
-inline std::string setPosition(size_t x, size_t y, bool is_title=false) {
-    if(is_title) {
-        return "\033[" + std::to_string(x) + ";" + std::to_string(y) + "H";
-    }
-    return "\033[" + std::to_string(x+1) + ";" + std::to_string(y) + "H";
+inline std::string setPosition(size_t x, size_t y, bool clear=false) {
+    return "\033[" + std::to_string(x+1) + ";" + std::to_string(y+1) + "H" + (clear ? clearLine : "");
 }
 
 inline std::string setColor(Color color) {
