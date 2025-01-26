@@ -186,6 +186,7 @@ public:
         selected_style = l.selected_style;
         variable = l.variable;
         callback = l.callback;
+
     }
 
     void select(std::string title_) {
@@ -209,11 +210,11 @@ public:
     }
 
     void print() {
-        std::cout << setColor(color) << setBGColor(bgcolor) << setStyle(style) << title << resetStyle;
+        std::cout << setStyle(style) << setColor(color) << setBGColor(bgcolor) << title << resetStyle;
     }
 
     void printSelected(size_t n) {
-        std::cout << setColor(selected_color) << setBGColor(selected_bgcolor) << setStyle(selected_style) << title << resetStyle;
+        std::cout << setStyle(selected_style) << setColor(selected_color) << setBGColor(selected_bgcolor) << title << resetStyle;
         std::cout << setPosition(n,0) << text;
         if (variable.type != Type::VOID && variable.address != nullptr) {
             std::cout << " : " << variable;
@@ -289,7 +290,9 @@ public:
                         << "| " <<debug_log_[debug_log_length-i-1] << std::endl;
         }
         std::cout << setPosition(current_layout_->size()+2, 0);
-        std::cout << "-------------------------------------------\n";
+        for(size_t i=0; i<debug_log_place-1; i++) {
+            std::cout << "-";
+        }
         std::cout << setPosition(std::max(current_layout_->size(),debug_log_length),0);
     }
 
